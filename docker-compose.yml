@@ -1,0 +1,83 @@
+# Docker Compose file for laptop-direct development environment
+# Using latest Docker Compose format (no version required for Compose v2+)
+
+services:
+  laptop:
+    build:
+      context: ./public_html
+      dockerfile: Dockerfile
+      # Build arguments can be added here if needed
+      # args:
+      #   - PHP_VERSION=7.3.33
+
+    container_name: laptop-dev
+
+    ports:
+      - "8080:80"    # HTTP
+      - "8443:443"   # HTTPS (if needed)
+
+    volumes:
+      - type: bind
+        source: ./public_html/laptop_ro
+        target: /var/www/html/laptop_ro
+        consistency: cached
+      # Optional: Mount logs for debugging
+      - type: bind
+        source: ./logs
+        target: /var/log/apache2
+        consistency: delegated
+      # Persistent MySQL/MariaDB data
+      - type: volume
+        source: mysql-data
+        target: /var/lib/mysql
+      # Persistent uploads/files directory
+      - type: bind
+        source: ./data/uploads
+        target: /var/www/html/uploads
+        consistency: cached
+
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
+      - APACHE_RUN_USER=www-data
+      - APACHE_RUN_GROUP=www-data
+      - APACHE_LOG_DIR=/var/log/apache2
+      - MYSQL_ROOT_PASSWORD=radu1980
+
+    # Healthcheck to ensure services are running
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Restart policy
+    restart: unless-stopped
+
+    # Startup command with service management
+    command: >
+      bash -c "
+        echo 'Starting services...' &&
+        service mariadb start &&
+        service apache2 start &&
+        echo 'MariaDB and Apache2 started!' &&
+        echo 'Application available at http://dev.laptop.io:8080' &&
+        echo 'Keeping container alive...' &&
+        tail -f /dev/null
+      "
+
+    # Network configuration
+    networks:
+      - laptop-network
+
+# Define custom network
+networks:
+  laptop-network:
+    driver: bridge
+    name: laptop-dev-network
+
+# Optional: Define volumes for persistent data
+volumes:
+  mysql-data:
+    driver: local
+    name: laptop-mysql-data

@@ -1,2 +1,3 @@
 public_html/laptop_ro
-*.sql
+laptopdr_m230.sql
+logs/*.log
