@@ -17,7 +17,7 @@ then
     #sed -i 's/https:\/\/dev\.laptop\.io/http:\/\/dev.laptop.io/g' /root/laptopdr_m230.sql
 
     echo "Importing databases...."
-    #smysql -u root laptopdr_m230 < /root/laptopdr_m230.sql
+    #mysql -u root laptopdr_m230 < /root/laptopdr_m230.sql
 
     mysql -u root -e "DROP USER 'laptopdr'@localhost;"
     mysql -u root -e "FLUSH PRIVILEGES;"
